@@ -10,7 +10,6 @@ Holger Mueller
 2025/12/27 Added support for Home Assistant add-on system
 2026/01/05 Replaced RPi.GPIO with gpiod for GPIO access (required by Raspberry Pi 5)
 2026/01/09 Renamed "Count" topic to "Volume", added "Energy" topic by using calorific_value config option
-2026/01/10 Fixed rounding issue when setting gas_counter from received MQTT message
 """
 
 import argparse
