@@ -1,0 +1,37 @@
+configuration:
+  device_name:
+    name: "Gas Meter Name"
+    description: "Gas meter device name. (default: `Gas Meter`)"
+  gpio_pin:
+    name: "GPIO Pin"
+    description: "GPIO Pin Nummer an dem die Pulse gezählt werden (default: `17`)"
+  calorific_value:
+    name: "Arbeitswert"
+    description: "Arbeitswert des Gases in kWh/m³ (default: `11.4`)"
+  homa_system_id:
+    name: "HomA System ID"
+    description: "HomA System ID (default: `123456-gas-meter`)"
+  homa_room:
+    name: "HomA Room"
+    description: "HomA Raumname in dem die Daten dargestellt werden sollen (default: `Sensors`)"
+  hass_area:
+    name: "Home Assistant Area"
+    description: "Home Assistant Area Name (default: `Energie`)"
+  mqtt_host:
+    name: "MQTT Hostname"
+    description: "Hostname eines remote MQTT brokers. Falls leer wird der interne MQTT Broker verwendet"
+  mqtt_port:
+    name: "MQTT Port"
+    description: "Port eines remote MQTT brokers. Falls leer wird der interne MQTT Broker verwendet"
+  mqtt_user:
+    name: "MQTT User"
+    description: "User eines remote MQTT brokers. Falls leer wird der default username des internen MQTT Broker verwendet"
+  mqtt_password:
+    name: "MQTT Password"
+    description: "Password eines remote MQTT brokers. Falls leer wird der interne MQTT Broker verwendet"
+  mqtt_ca_certs:
+    name: "MQTT CA Certificates"
+    description: "CA Certificates Dateiname. Leer lassen für Port 1883."
+  debug:
+    name: "Debug"
+    description: "Ausgabe von Debug-Nachrichten"

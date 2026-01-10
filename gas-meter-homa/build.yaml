@@ -1,0 +1,10 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
+# https://github.com/home-assistant/docker-base
+build_from:
+  aarch64: "ghcr.io/home-assistant/aarch64-base-debian:latest"
+  amd64: "ghcr.io/home-assistant/amd64-base-debian:latest"
+labels:
+  org.opencontainers.image.title: "Home Assistant Add-on: HomA MQTT gas meter"
+  org.opencontainers.image.description: "HomA MQTT gas meter add-on."
+  org.opencontainers.image.source: "https://github.com/hass-hmueller01/addon-gas-meter-homa"
+  org.opencontainers.image.licenses: "MIT License"

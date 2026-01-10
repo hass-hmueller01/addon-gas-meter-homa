@@ -1,0 +1,13 @@
+# Runtime Python dependencies for gas-meter-homa
+# Note: system packages (installed via apt) required by the Dockerfile:
+#   - python3-libgpiod (provides libgpiod bindings)
+# Those are not managed via pip and must be installed on the system image.
+
+paho-mqtt>=2.0
+
+# Helper library installed from Git
+git+https://github.com/hass-hmueller01/hass-addon-helper.git@main
+
+
+# Helper library installed from local path
+#/usr/local/src/hass-addon-helper

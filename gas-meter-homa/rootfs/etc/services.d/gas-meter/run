@@ -1,0 +1,15 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the service
+# s6-overlay docs: https://github.com/just-containers/s6-overlay
+# ==============================================================================
+
+bashio::log.info "gas-meter service starting ..."
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Start the gas-meter service
+exec python3 gas_meter.py
+
+#tail -f /dev/null

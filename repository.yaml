@@ -1,0 +1,4 @@
+# https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
+name: HomA MQTT gas meter add-on repository
+url: "https://github.com/hass-hmueller01/addon-gas-meter-homa"
+maintainer: Holger Mueller <hmueller01@users.noreply.github.com>
