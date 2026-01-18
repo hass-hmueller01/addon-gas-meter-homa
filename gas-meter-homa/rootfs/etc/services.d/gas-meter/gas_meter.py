@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# pylint: disable=import-outside-toplevel, global-statement, logging-fstring-interpolation
+# pylint: disable=import-outside-toplevel, logging-fstring-interpolation
 """
 Reads gas meter pulses and sends them to MQTT broker used by HomA framework.
 
@@ -10,9 +10,12 @@ Holger Mueller
 2025/12/27 Added support for Home Assistant add-on system
 2026/01/05 Replaced RPi.GPIO with gpiod for GPIO access (required by Raspberry Pi 5)
 2026/01/09 Renamed "Count" topic to "Volume", added "Energy" topic by using calorific_value config option
+2026/01/11 Refacored use of global variables to function attributes, fixed debounce handling
+2026/01/15 Added suggested_display_precision to Home Assistant discovery config messages
 """
 
 import argparse
+from datetime import timedelta
 import sys
 import json
 import os.path
@@ -39,7 +42,7 @@ PY_FILE = os.path.basename(__file__)
 INIT_FILE = "/dev/shm/homa_init."+ systemId
 GPIO_CHIP = "/dev/gpiochip0"
 RESOLUTION = 0.01 # m^3 / pulse
-DEBOUNCE_MS = 50 # debounce time [ms]
+DEBOUNCE_MS = 1000 # debounce time [ms]
 
 T_VOLUME = "Volume"
 T_ENERGY = "Energy"
@@ -47,15 +50,10 @@ T_FLOW_RATE = "Flow rate"
 T_TIMESTAMP = "Timestamp"
 # config components control room name (if wanted) here
 mqtt_arr = [
-    {'topic': T_VOLUME,    'room': 'Home', 'unit': ' m³',   'class': 'gas'},
-    {'topic': T_ENERGY,    'room': '',     'unit': ' kWh',  'class': 'energy'},
-    {'topic': T_FLOW_RATE, 'room': '',     'unit': ' m³/h', 'class': 'volume_flow_rate'},
+    {'topic': T_VOLUME,    'room': 'Home', 'unit': ' m³',   'precision': 2, 'class': 'gas'},
+    {'topic': T_ENERGY,    'room': '',     'unit': ' kWh',  'precision': 2, 'class': 'energy'},
+    {'topic': T_FLOW_RATE, 'room': '',     'unit': ' m³/h', 'precision': 3, 'class': 'volume_flow_rate'},
     {'topic': T_TIMESTAMP, 'room': '',     'unit': '',      'class': '_datetime'}]
-
-
-# global variables
-gas_counter: int = 0  # counter of gas amount [ticks per RESOLUTION]
-ts_last_ms: int = 0  # time of last pulse [ms]
 
 
 def get_topic(t1 = None, t2 = None, t3 = None) -> str:
@@ -117,7 +115,7 @@ def homeassistant_config(mqtt_item):
             "identifiers":[systemId],
             "name":device_name,
             "manufacturer":"Holger Müller",
-            "model":"Respberry Pi 5 Gas Meter Module",
+            "model":"Raspberry Pi 5 Gas Meter Module",
             "suggested_area":area
         }
     }
@@ -134,6 +132,9 @@ def homeassistant_config(mqtt_item):
         del payload['device_class']
         payload['value_template'] = "{{ as_datetime(value) }}"
         payload['icon'] = "mdi:calendar-arrow-right"
+    # set suggested_display_precision only if available
+    if 'precision' in mqtt_item and isinstance(mqtt_item['precision'], int):
+        payload['suggested_display_precision'] = mqtt_item['precision']
     # set unit_of_measurement only if available
     if 'unit' in mqtt_item and mqtt_item['unit']:
         payload['unit_of_measurement'] = mqtt_item['unit'].strip()
@@ -170,14 +171,13 @@ def on_connect(client, userdata, flags, reason_code, properties):  # pylint: dis
 
 def on_message(client, userdata, msg):  # pylint: disable=unused-argument
     """The callback for when a PUBLISH message is received from the broker."""
-    global gas_counter
     payload_str = msg.payload.decode("utf-8")  # payload is bytes since API version 2
     addon.log.debug("on_message(): "+ msg.topic+ ": "+ payload_str)
     if msg.topic == get_topic("controls", T_VOLUME):
         new_gas_counter = round(float(payload_str) / RESOLUTION)
-        if abs(gas_counter - new_gas_counter) > 0:
-            addon.log.warning(f"Setting new gas_counter: {new_gas_counter} which differs from current ({gas_counter})")
-            gas_counter = new_gas_counter
+        if abs(gas_meter_count.gas_counter - new_gas_counter) > 0:
+            addon.log.warning(f"Setting new gas_counter: {new_gas_counter} which differs from current ({gas_meter_count.gas_counter})")
+            gas_meter_count.gas_counter = new_gas_counter
 
 
 def on_publish(client, userdata, mid, reason_code, properties):  # pylint: disable=unused-argument
@@ -185,25 +185,26 @@ def on_publish(client, userdata, mid, reason_code, properties):  # pylint: disab
     # addon.log.debug("on_publish(): message send %s", str(mid))
 
 
-def gas_meter_count(ts_ms: int) -> int:
+def gas_meter_count(ts_ms: int):
     """
     Count gas meter pulse and send to MQTT broker.
     ts: timestamp in ms
-    returns timestamp in ms
     """
-    global gas_counter
 
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    gas_counter += 1
-    volume = round(gas_counter * RESOLUTION, 3)  # do limit precision 3 digits after dot
+    gas_meter_count.gas_counter += 1
+    volume = round(gas_meter_count.gas_counter * RESOLUTION, 3)  # do limit precision 3 digits after dot
     energy = round(volume * calorific_value, 3)  # do limit precision 3 digits after dot
-    rate = round(RESOLUTION / (ts_ms - ts_last_ms) * 1000 * 3600, 3)  # do limit precision 3 digits after dot
+    if gas_meter_count.ts_last_ms == 0:
+        rate = 0.0
+    else:
+        rate = round(RESOLUTION / (ts_ms - gas_meter_count.ts_last_ms) * 1000 * 3600, 3)  # do limit precision 3 digits after dot
+    gas_meter_count.ts_last_ms = ts_ms
     mqttc.publish(get_topic("controls", T_VOLUME), volume, retain=True)
     mqttc.publish(get_topic("controls", T_ENERGY), energy, retain=True)
     mqttc.publish(get_topic("controls", T_FLOW_RATE), rate, retain=True)
     mqttc.publish(get_topic("controls", T_TIMESTAMP), timestamp, retain=True)
-    addon.log.debug(f"Rising edge detected. gas_counter = {gas_counter}, volume = {volume} m³")
-    return ts_ms
+    addon.log.debug(f"Rising edge detected. gas_counter = {gas_meter_count.gas_counter}, volume = {volume} m³")
 
 
 def gas_meter_wait():
@@ -211,7 +212,6 @@ def gas_meter_wait():
     import gpiod
     from gpiod.line import Direction, Edge, Bias
     from gpiod.edge_event import EdgeEvent
-    global ts_last_ms
 
     with gpiod.Chip(GPIO_CHIP) as chip:
         info = chip.get_info()
@@ -222,9 +222,10 @@ def gas_meter_wait():
         consumer=PY_FILE,
         config={
             gpio_pin: gpiod.LineSettings(
-                direction=Direction.INPUT
-                , edge_detection=Edge.RISING
-                , bias=Bias.PULL_UP
+                direction=Direction.INPUT,
+                edge_detection=Edge.RISING,
+                debounce_period=timedelta(milliseconds=100),
+                bias=Bias.PULL_UP
             )
         },
     ) as request:
@@ -234,19 +235,18 @@ def gas_meter_wait():
             request.wait_edge_events(timeout=5_000)  # 5 sec timeout
             events = request.read_edge_events()
             for event in events:
-                if event.line_offset != gpio_pin:
-                    addon.log.error(f"Received event for unexpected line offset {event.line_offset}, expected {gpio_pin}")
-                    continue
-                # debounce
-                ts_ms = event.timestamp_ns // 1_000_000
-                if ts_ms - ts_last_ms < DEBOUNCE_MS:
-                    continue
-
                 # raising edge = impulse
-                if event.event_type == EdgeEvent.Type.RISING_EDGE:
-                    ts_last_ms = gas_meter_count(ts_ms)
+                if event.line_offset == gpio_pin and event.event_type == EdgeEvent.Type.RISING_EDGE:
+                    # debounce
+                    ts_ms = event.timestamp_ns // 1_000_000
+                    if ts_ms - gas_meter_wait.ts_last_ms < DEBOUNCE_MS:
+                        addon.log.debug(f"Debounce: Ignored pulse on line {event.line_offset} at {ts_ms} ms, last at {gas_meter_wait.ts_last_ms} ms")
+                        gas_meter_wait.ts_last_ms = ts_ms
+                        continue
+                    gas_meter_count(ts_ms)
+                    gas_meter_wait.ts_last_ms = ts_ms
                 else:
-                    addon.log.error(f"Unexpected event type {event.event_type} on line offset {event.line_offset}")
+                    addon.log.error(f"Unexpected event type {event.event_type} on line {event.line_offset}, expected {EdgeEvent.Type.RISING_EDGE} on {gpio_pin}")
 
 
 def parse_args():
@@ -261,6 +261,9 @@ def parse_args():
 
 
 # main program
+gas_meter_count.gas_counter = 0  # counter of gas amount [ticks per RESOLUTION]
+gas_meter_count.ts_last_ms = 0  # time of last pulse send to broker [ms]
+gas_meter_wait.ts_last_ms = 0  # time of last debounced pulse [ms]
 args = parse_args()
 if args.d:
     debug = True

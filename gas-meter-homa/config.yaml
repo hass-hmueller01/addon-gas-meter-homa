@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Gas meter to HomA MQTT
-version: 1.0.0
+version: 1.1.0
 slug: gas-meter-homa
 description: A gas meter monitor for the HomA MQTT framework
 url: https://github.com/hass-hmueller01/addon-gas-meter-homa
