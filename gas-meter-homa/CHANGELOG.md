@@ -8,5 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-01-18
+### Fixed
+- Refacored use of global variables to function attributes in gas_meter.py
+- Fixed debounce handling
+### Added
+- Added suggested_display_precision to Home Assistant discovery config messages
+
 ## [1.0.0] - 2026-01-10
 - Initial release
