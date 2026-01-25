@@ -12,7 +12,7 @@ RUN apt-get update && \
 # Install hass-addon-helper from Git
 # RUN \
 #     mkdir -p /usr/local/src && \
-#     git -C /usr/local/src clone -b main https://github.com/hass-hmueller01/hass-addon-helper.git
+#     git -C /usr/local/src clone --depth 1 --branch main https://github.com/hass-hmueller01/hass-addon-helper.git
 #     pip3 install --no-cache-dir --root-user-action ignore --break-system-packages \
 #         git+https://github.com/hass-hmueller01/hass-addon-helper.git@main
 
