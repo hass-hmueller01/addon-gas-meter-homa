@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Changed
+- Replaced deprecated object_id by default_entity_id in homeassistant_config
 
 ## [1.1.0] - 2026-01-18
 ### Fixed
