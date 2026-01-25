@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # pylint: disable=import-outside-toplevel, logging-fstring-interpolation
-"""
-Reads gas meter pulses and sends them to MQTT broker used by HomA framework.
 
-Holger Mueller
-2018/03/12 Initial revision
-2020/10/15 Made script Python3 compatible
-2025/12/27 Added support for Home Assistant add-on system
-2026/01/05 Replaced RPi.GPIO with gpiod for GPIO access (required by Raspberry Pi 5)
-2026/01/09 Renamed "Count" topic to "Volume", added "Energy" topic by using calorific_value config option
-2026/01/11 Refacored use of global variables to function attributes, fixed debounce handling
-2026/01/15 Added suggested_display_precision to Home Assistant discovery config messages
-"""
+""" Reads gas meter pulses and sends them to MQTT broker used by HomA framework. """
+
+# Holger Mueller
+# 2018/03/12 Initial revision
+# 2020/10/15 Made script Python3 compatible
+# 2025/12/27 Added support for Home Assistant add-on system
+# 2026/01/05 Replaced RPi.GPIO with gpiod for GPIO access (required by Raspberry Pi 5)
+# 2026/01/09 Renamed "Count" topic to "Volume", added "Energy" topic by using calorific_value config option
+# 2026/01/11 Refacored use of global variables to function attributes, fixed debounce handling
+# 2026/01/15 Added suggested_display_precision to Home Assistant discovery config messages
+# 2026/01/25 Replaced deprecated object_id by default_entity_id in homeassistant_config
 
 import argparse
 from datetime import timedelta
@@ -110,7 +110,7 @@ def homeassistant_config(mqtt_item):
         "state_topic":"/devices/"+systemId+"/controls/"+mqtt_item['topic'],
         "name":mqtt_item['topic'],
         "unique_id":object_id,
-        "object_id":object_id,
+        "default_entity_id":object_id,
         "device":{
             "identifiers":[systemId],
             "name":device_name,
