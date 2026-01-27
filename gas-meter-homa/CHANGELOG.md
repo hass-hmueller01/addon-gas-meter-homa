@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 ### Changed
 - Replaced deprecated object_id by default_entity_id in homeassistant_config
+- Set LOG_TIMESTAMP to %Y-%m-%d %T
 
 ## [1.1.0] - 2026-01-18
 ### Fixed
