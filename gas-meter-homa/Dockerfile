@@ -3,6 +3,8 @@ ARG BUILD_ARCH=amd64
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-debian:latest
 FROM $BUILD_FROM
 
+ENV LOG_TIMESTAMP="%Y-%m-%d %T"
+
 RUN echo "alias l='ls --color=auto -alF'" >> /root/.bashrc
 
 # Install dependencies
